@@ -60,6 +60,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  
 }
 .newp{
   margin-bottom: 0px;
@@ -87,4 +88,6 @@
 }
 .edit_{
   cursor: pointer;
+  margin-right: 10px;
+  font-size: 18px;
 }

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import DeleteModal from "../../common/modal/DeleteModal";
 import axios from "axios";
 import ReactLoading from "react-loading";
-import { AddTodo, AllList, DeleteTodo } from "../../services/Api";
+import { AddTodo, AllList, DeleteTodo, EditTodo } from "../../services/Api";
 import { toast } from "react-toastify";
 export interface data {
   title: string;
@@ -15,13 +15,12 @@ const TodoList = () => {
   const [deleteId, setDeleteId] = useState<string>();
   const [edit, setEdit] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [editId, setEditId] = useState<number>();
+  const [editId, setEditId] = useState<string>();
   const [data, setData] = useState<data>({
     title: "",
     description: "",
   });
   const [show, setShow] = useState(false);
-
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
   const [list, setList] = useState<data[]>([]);
@@ -50,15 +49,24 @@ const TodoList = () => {
 
   const pushList = async () => {
     if (edit && editId != undefined) {
-      const newitem = [...list];
-      newitem[editId] = data;
-      setList(newitem);
-      setData({
-        title: "",
-        description: "",
-      });
-      setEdit(false);
-      setEditId(undefined);
+      try {
+        const newItem = await EditTodo(editId, {
+          title: data?.title,
+          description: data?.description,
+        });
+        if (newItem?.data?.success) {
+          toast.success(newItem?.data?.message);
+          listing();
+          setData({
+            title: "",
+            description: "",
+          });
+          setEdit(false);
+          setEditId(undefined);
+        }
+      } catch {
+        (e: any) => console.log("e");
+      }
     } else {
       // setList(prev=>[...prev,data]);
       const res = await AddTodo(data);
@@ -76,7 +84,6 @@ const TodoList = () => {
     }
   };
 
-  console.log("res==>", deleteId);
   const DeleteItem = async () => {
     try {
       if (deleteId !== undefined) {
@@ -86,31 +93,18 @@ const TodoList = () => {
           listing();
         }
       }
-
-      // if (deleteId !== undefined) {
-      //   const data = [...list];
-      //   // const ans = data.filter((item: any, index: number) => index !== deleteId);
-      //   // setList(ans);
-      //   // console.log("ans==>", ans);
-
-      //   setDeleteId(undefined);
-      // }
-      console.log("delete item,");
     } catch {
       (e: any) => console.log("e", e);
     }
   };
 
   const handleEdit = (item: data) => {
-    console.log("iten is ", item);
     setData({ ...item });
   };
 
   useEffect(() => {
     listing();
   }, []);
-
-  console.log("list", list);
 
   return (
     <div className="wrapper">
@@ -147,41 +141,48 @@ const TodoList = () => {
           </>
         ) : (
           <>
-            {" "}
-            {list?.map((item: data, index: number) => {
-              return (
-                <div className="single">
-                  <div>
-                    <p className="newp nh">{item?.title}</p>
-                    <span>{item?.description}</span>
-                  </div>
-                  <div className="right">
-                    <p
-                      className="newp edit_"
-                      onClick={() => {
-                        handleEdit(item);
-                        setEditId(index);
-                        setEdit(true);
-                      }}
-                    >
-                      Edit
-                    </p>
-                    <button
-                      className="btnnew"
-                      onClick={() => {
-                        handleShow();
-                        console.log("item", item);
-                        if (item?._id !== null) {
-                          setDeleteId(item?._id);
-                        }
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {list.length > 0 ? (
+              <>
+                {" "}
+                {list?.map((item: data, index: number) => {
+                  return (
+                    <div className="single">
+                      <div>
+                        <p className="newp nh">{item?.title}</p>
+                        <span>{item?.description}</span>
+                      </div>
+                      <div className="right">
+                        <p
+                          className="newp edit_"
+                          onClick={() => {
+                            window.scrollTo(0, 0);
+                            handleEdit(item);
+                            setEditId(item?._id);
+                            setEdit(true);
+                          }}
+                        >
+                          Edit
+                        </p>
+                        <button
+                          className="btnnew"
+                          onClick={() => {
+                            handleShow();
+                            console.log("item", item);
+                            if (item?._id !== null) {
+                              setDeleteId(item?._id);
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <h1 style={{ marginTop: "50px" }}>No todo Added</h1>
+            )}
           </>
         )}
       </div>
